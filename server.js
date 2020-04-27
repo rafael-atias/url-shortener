@@ -31,7 +31,8 @@ app.get('/', function (req, res) {
 // your first API endpoint... 
 app.post("/api/shorturl/new", function (req, res) {
   res.json({
-    url: req.body.url
+    original_url: req.body.url,
+    short_url: "",
   });
 });
 
