@@ -1,7 +1,7 @@
 {
 	"name": "shorturl",
 	"version": "0.0.2",
-	"description": "API project for freeCodeCamp",
+	"description": "a url shortener project for freeCodeCamp",
 	"main": "server.js",
 	"scripts": {
 		"start": "node server.js"
@@ -25,5 +25,8 @@
 		"hyperdev",
 		"express"
 	],
-	"license": "MIT"
+	"license": "MIT",
+	"devDependencies": {
+		"nodemon": "^2.0.3"
+	}
 }
