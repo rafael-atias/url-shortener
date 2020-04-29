@@ -5,9 +5,12 @@ var mongo = require('mongodb');
 var mongoose = require('mongoose');
 
 var cors = require('cors');
-const bodyParser = require("body-parser");
 
 var app = express();
+
+const bodyParser = require("body-parser");
+
+const { isUrlLive } = require("./helpers");
 
 // Basic Configuration 
 var port = process.env.PORT || 3000;
@@ -29,14 +32,22 @@ app.get('/', function (req, res) {
 
 
 // your first API endpoint... 
-app.post("/api/shorturl/new", function (req, res) {
-  res.json({
-    original_url: req.body.url,
-    short_url: "",
+app.post("/api/shorturl/new", async function (request, response) {
+  const bool = await isUrlLive(request.body.url);
+
+  if (bool === false) {
+    return response.json({
+      error: "invalid URL",
+    });
+  }
+
+  return response.json({
+    status: "success",
+    original_url: request.body.url,
+    short_url: "1",
   });
 });
 
-
 app.listen(port, function () {
-  console.log('Node.js listening ...');
+  console.log(`Node.js listening on port ${port}`);
 });
