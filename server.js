@@ -1,22 +1,31 @@
 'use strict';
 
-var express = require('express');
-var mongo = require('mongodb');
-var mongoose = require('mongoose');
+// imports
 
-var cors = require('cors');
+const express = require('express');
+const mongo = require('mongodb');
+const { connect, Schema, model } = require('mongoose');
 
-var app = express();
+const cors = require('cors');
+
+const app = express();
 
 const bodyParser = require("body-parser");
 
 const { isUrlLive } = require("./helpers");
 
 // Basic Configuration 
-var port = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 
 /** this project needs a db !! **/
-// mongoose.connect(process.env.DB_URI);
+connect(process.env.DB_URI, { useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true });
+
+const urlSchema = new Schema({
+  original_url: { type: String, required: true, unique: true },
+  short_url: { type: String },
+});
+
+const Url = model("Url", urlSchema);
 
 app.use(cors());
 
@@ -31,21 +40,46 @@ app.get('/', function (req, res) {
 });
 
 
-// your first API endpoint... 
 app.post("/api/shorturl/new", async function (request, response) {
-  const bool = await isUrlLive(request.body.url);
+  try {
+    const bool = await isUrlLive(request.body.url);
 
-  if (bool === false) {
+    if (bool === false) {
+      return response.json({
+        error: "invalid URL",
+      });
+    }
+
+    if (await Url.exists({ original_url: request.body.url })) {
+      const entry = await Url
+        .findOne({ original_url: request.body.url })
+        .exec();
+
+      return response.json({
+        original_url: entry.original_url,
+        short_url: entry.short_url,
+      });
+    }
+
+    const count = await Url
+      .estimatedDocumentCount()
+      .exec();
+
+    const entry = await Url.create({
+      original_url: request.body.url,
+      short_url: count + 1,
+    });
+
     return response.json({
-      error: "invalid URL",
+      original_url: entry.original_url,
+      short_url: entry.short_url
+    });
+
+  } catch (error) {
+    return response.json({
+      error: "We cannot communicate with the database. Please, try again later"
     });
   }
-
-  return response.json({
-    status: "success",
-    original_url: request.body.url,
-    short_url: "1",
-  });
 });
 
 app.listen(port, function () {
