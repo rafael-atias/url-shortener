@@ -42,7 +42,9 @@ app.get('/', function (req, res) {
 
 app.post("/api/shorturl/new", async function (request, response) {
   try {
-    const bool = await isUrlLive(request.body.url);
+    const bodyUrl = encodeURI(request.body.url);
+
+    const bool = await isUrlLive(bodyUrl);
 
     if (bool === false) {
       return response.json({
@@ -50,9 +52,9 @@ app.post("/api/shorturl/new", async function (request, response) {
       });
     }
 
-    if (await Url.exists({ original_url: request.body.url })) {
+    if (await Url.exists({ original_url: bodyUrl })) {
       const entry = await Url
-        .findOne({ original_url: request.body.url })
+        .findOne({ original_url: bodyUrl })
         .exec();
 
       return response.json({
@@ -66,7 +68,7 @@ app.post("/api/shorturl/new", async function (request, response) {
       .exec();
 
     const entry = await Url.create({
-      original_url: request.body.url,
+      original_url: bodyUrl,
       short_url: count + 1,
     });
 
@@ -78,6 +80,25 @@ app.post("/api/shorturl/new", async function (request, response) {
   } catch (error) {
     return response.json({
       error: "We cannot communicate with the database. Please, try again later"
+    });
+  }
+});
+
+app.get("/api/shorturl/:url", async function (request, response) {
+  try {
+
+    if (await Url.exists({ short_url: request.params.url })) {
+      const entry = await Url
+        .findOne({ short_url: request.params.url })
+        .exec();
+
+      return response.redirect(303, entry.original_url);
+    }
+
+    throw new Error("invalid url");
+  } catch (error) {
+    return response.json({
+      error: error.message,
     });
   }
 });
