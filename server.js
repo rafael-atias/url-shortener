@@ -42,7 +42,9 @@ app.get('/', function (req, res) {
 
 app.post("/api/shorturl/new", async function (request, response) {
   try {
-    const bool = await isUrlLive(request.body.url);
+    const bodyUrl = encodeURI(request.body.url);
+
+    const bool = await isUrlLive(bodyUrl);
 
     if (bool === false) {
       return response.json({
@@ -50,9 +52,9 @@ app.post("/api/shorturl/new", async function (request, response) {
       });
     }
 
-    if (await Url.exists({ original_url: request.body.url })) {
+    if (await Url.exists({ original_url: bodyUrl })) {
       const entry = await Url
-        .findOne({ original_url: request.body.url })
+        .findOne({ original_url: bodyUrl })
         .exec();
 
       return response.json({
@@ -66,7 +68,7 @@ app.post("/api/shorturl/new", async function (request, response) {
       .exec();
 
     const entry = await Url.create({
-      original_url: request.body.url,
+      original_url: bodyUrl,
       short_url: count + 1,
     });
 
