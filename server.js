@@ -82,6 +82,25 @@ app.post("/api/shorturl/new", async function (request, response) {
   }
 });
 
+app.get("/api/shorturl/:url", async function (request, response) {
+  try {
+
+    if (await Url.exists({ short_url: request.params.url })) {
+      const entry = await Url
+        .findOne({ short_url: request.params.url })
+        .exec();
+
+      return response.redirect(303, entry.original_url);
+    }
+
+    throw new Error("invalid url");
+  } catch (error) {
+    return response.json({
+      error: error.message,
+    });
+  }
+});
+
 app.listen(port, function () {
   console.log(`Node.js listening on port ${port}`);
 });
