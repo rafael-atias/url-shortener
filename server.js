@@ -3,6 +3,8 @@
 // imports
 
 const express = require('express');
+const mongoSanitize = require("mongo-sanitize");
+
 const mongo = require('mongodb');
 const { connect, Schema, model } = require('mongoose');
 
@@ -27,20 +29,25 @@ const urlSchema = new Schema({
 
 const Url = model("Url", urlSchema);
 
+// middleware
+
 app.use(cors());
 
 /** this project needs to parse POST bodies **/
 // you should mount the body-parser here
 app.use(bodyParser.urlencoded({ extended: false }));
 
+// routes definitions
 app.use('/public', express.static(process.cwd() + '/public'));
 
 app.get('/', function (req, res) {
   res.sendFile(process.cwd() + '/views/index.html');
 });
 
-
-app.post("/api/shorturl/new", async function (request, response) {
+app.post("/api/shorturl/new", function (request, response, next) {
+  request.body = mongoSanitize(request.body);
+  next();
+}, async function (request, response) {
   try {
     const bodyUrl = encodeURI(request.body.url);
 
