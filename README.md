@@ -1,5 +1,7 @@
 # API Project: URL Shortener Microservice for freeCodeCamp
 
+This is my implementation of the FreeCodeCamp's [URL shortener project](https://www.freecodecamp.org/learn/apis-and-microservices/apis-and-microservices-projects/url-shortener-microservice ). The repository is a fork of the [Freecodecamp boilerplate repo](https://github.com/freeCodeCamp/boilerplate-project-urlshortener/ ).
+
 
 ### User Stories
 
@@ -14,8 +16,12 @@ POST [project_url]/api/shorturl/new - body (urlencoded) :  url=https://www.googl
 
 #### Usage:
 
-[this_project_url]/api/shorturl/3
+[\[this_project_url\]/api/shorturl/4283b0db37ea](https://rafael-atias-fcc-url-shortener.glitch.me/api/shorturl/4283b0db37ea)
 
 #### Will redirect to:
 
-https://www.freecodecamp.org/forum/
+https://www.freecodecamp.org/
+
+#### Repository
+
+[Link to Github repo here](https://github.com/rafael-atias/fcc-url-shortener)
