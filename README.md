@@ -2,6 +2,7 @@
 
 This is my implementation of the FreeCodeCamp's [URL shortener project](https://www.freecodecamp.org/learn/apis-and-microservices/apis-and-microservices-projects/url-shortener-microservice ). The repository is a fork of the [Freecodecamp boilerplate repo](https://github.com/freeCodeCamp/boilerplate-project-urlshortener/ ).
 
+[Link to the app in Glitch](https://rafael-atias-fcc-url-shortener.glitch.me/ )
 
 ### User Stories
 
