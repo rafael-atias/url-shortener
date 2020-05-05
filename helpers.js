@@ -1,29 +1,19 @@
 "use-strict";
 
-// mongo and mongoosejs related requires
+// imports 
 
 const mongoSanitize = require("mongo-sanitize");
-
-const mongo = require('mongodb');
-const { connect, Schema, model } = require('mongoose');
-
-// nodejs requires
-
 const DNS = require("dns");
 
-// database schema and model definitions
-
-/** this project needs a db !! **/
-connect(process.env.DB_URI, { useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true });
-
-const urlSchema = new Schema({
-    original_url: { type: String, required: true, unique: true },
-    short_url: { type: String },
-});
-
-const Url = model("Url", urlSchema);
+const { urlModel } = require("./model");
 
 // function definitions
+
+const runSanitizer = function (request, response, next) {
+    request.body = mongoSanitize(request.body);
+    next();
+};
+
 const isUrlLive = function (url) {
     return new Promise(function (resolve, reject) {
         const u = (typeof url === "string") ? new URL(url) : url;
@@ -42,8 +32,8 @@ const isUrlLive = function (url) {
     })
 };
 
-const getUrlFromDb = async function (response, encodedUrl) {
-    const { original_url, short_url } = await Url
+const getUrlFromDb = async function (response, encodedUrl, model) {
+    const { original_url, short_url } = await model
         .findOne({ original_url: encodedUrl })
         .exec();
 
@@ -53,12 +43,12 @@ const getUrlFromDb = async function (response, encodedUrl) {
     });
 };
 
-const createNewEntryInDb = async function (response, encodedUrl) {
-    const count = await Url
+const createNewEntryInDb = async function (response, encodedUrl, model) {
+    const count = await model
         .estimatedDocumentCount()
         .exec();
 
-    const { original_url, short_url } = await Url.create({
+    const { original_url, short_url } = await model.create({
         original_url: encodedUrl,
         short_url: count + 1,
     });
@@ -69,57 +59,56 @@ const createNewEntryInDb = async function (response, encodedUrl) {
     });
 };
 
-const newShortUrlHandler = async function (request, response) {
-    try {
-        const encodedUrl = encodeURI(request.body.url);
+const newShortUrlHandlerFactory = function (model) {
+    return async function (request, response) {
+        try {
+            const encodedUrl = encodeURI(request.body.url);
 
-        const bool = await isUrlLive(encodedUrl);
+            const bool = await isUrlLive(encodedUrl);
 
-        if (bool === false) {
+            if (bool === false) {
+                return response.json({
+                    error: "invalid URL",
+                });
+            }
+
+            if (await model.exists({ original_url: encodedUrl })) {
+                return getUrlFromDb(response, encodedUrl, model);
+            }
+
+            return createNewEntryInDb(response, encodedUrl, model);
+
+        } catch (error) {
             return response.json({
-                error: "invalid URL",
+                error: "We cannot communicate with the database. Please, try again later"
             });
         }
-
-        if (await Url.exists({ original_url: encodedUrl })) {
-            return getUrlFromDb(response, encodedUrl);
-        }
-
-        return createNewEntryInDb(response, encodedUrl);
-
-    } catch (error) {
-        return response.json({
-            error: "We cannot communicate with the database. Please, try again later"
-        });
-    }
+    };
 };
 
-const getUrlHandler = async function (request, response) {
-    try {
+const getUrlHandlerFactory = function (model) {
+    return async function (request, response) {
+        try {
 
-        if (await Url.exists({ short_url: request.params.url })) {
-            const entry = await Url
-                .findOne({ short_url: request.params.url })
-                .exec();
+            if (await model.exists({ short_url: request.params.url })) {
+                const { original_url } = await model
+                    .findOne({ short_url: request.params.url })
+                    .exec();
 
-            return response.redirect(303, entry.original_url);
+                return response.redirect(303, original_url);
+            }
+
+            throw new Error("invalid url");
+        } catch (error) {
+            return response.json({
+                error: error.message,
+            });
         }
-
-        throw new Error("invalid url");
-    } catch (error) {
-        return response.json({
-            error: error.message,
-        });
-    }
-};
-
-const runSanitizer = function (request, response, next) {
-    request.body = mongoSanitize(request.body);
-    next();
+    };
 };
 
 module.exports = {
-    newShortUrlHandler,
-    getUrlHandler,
+    newShortUrlHandler: newShortUrlHandlerFactory(urlModel),
+    getUrlHandler: getUrlHandlerFactory(urlModel),
     runSanitizer,
 };
