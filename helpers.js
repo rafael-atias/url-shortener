@@ -18,6 +18,13 @@ const mongoSanitize = require("mongo-sanitize");
 const DNS = require("dns");
 
 /**
+ * @module crypto
+ * 
+ * @see https://nodejs.org/api/crypto.html
+ */
+const crypto = require("crypto");
+
+/**
  * @constant urlModel The model of the database
  */
 const { urlModel } = require("./model");
@@ -93,6 +100,7 @@ const getUrlFromDb = async function (response, url, model) {
  * Consumes a response, a url and a model, and returns
  * a JSON response
  * 
+ * @see https://nodejs.org/api/crypto.html#crypto_crypto_randombytes_size_callback
  * @see https://mongoosejs.com/docs/api/model.html#model_Model.create
  * 
  * @param {Response} response An ExpressJS Response object
@@ -101,13 +109,12 @@ const getUrlFromDb = async function (response, url, model) {
  * @returns {String} A stringified JSON object
  */
 const createNewEntryInDb = async function (response, url, model) {
-    const count = await model
-        .estimatedDocumentCount()
-        .exec();
+    // an alphanumeric string of 12 characters length
+    const hash = crypto.randomBytes(6).toString("hex");
 
     const { original_url, short_url } = await model.create({
         original_url: url,
-        short_url: count + 1,
+        short_url: hash,
     });
 
     return response.json({
