@@ -25,4 +25,4 @@ https://www.freecodecamp.org/
 
 #### Repository
 
-[Link to Github repo here](https://github.com/rafael-atias/fcc-url-shortener)
+[Link to Github repo here](https://github.com/rafael-atias/url-shortener)
